@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RollLerd POS & Business V3</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--ink:#20242b;--muted:#707784;--line:#e7e9ee;--green:#178653;--red:#c44747;--gold:#c58a24;--nav:#202a35}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header{background:var(--nav);color:#fff;padding:17px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-size:20px;font-weight:800;letter-spacing:.2px}.brand small{display:block;font-size:11px;color:#c7d0da;font-weight:500}
+.wrap{display:grid;grid-template-columns:230px 1fr;min-height:calc(100vh - 68px)}
+nav{background:#fff;border-right:1px solid var(--line);padding:15px;display:flex;flex-direction:column;gap:5px}
+nav button{border:0;background:transparent;text-align:left;padding:11px 12px;border-radius:9px;color:#45505c;cursor:pointer;font-size:14px}
+nav button.active,nav button:hover{background:#edf5f1;color:#126b43;font-weight:700}
+main{padding:24px;max-width:1400px;width:100%;margin:auto}
+h1{font-size:25px;margin:0 0 5px}h2{font-size:17px;margin:0 0 14px}.sub{color:var(--muted);margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px;margin:16px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px;box-shadow:0 2px 8px #18233408}
+.metric label{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:25px;margin-top:5px}.green{color:var(--green)}.red{color:var(--red)}.gold{color:var(--gold)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+button,.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 12px;cursor:pointer;color:inherit;font-weight:600}
+button.primary{background:var(--green);border-color:var(--green);color:white}.btn-danger{color:var(--red)}
+input,select{border:1px solid #d9dde4;border-radius:8px;padding:9px 10px;background:white;max-width:100%;font:inherit}
+input[type=number]{width:110px}input[type=date]{width:155px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{color:var(--muted);font-weight:650;background:#fafbfc}
+.tablewrap{overflow:auto}.pill{display:inline-block;padding:3px 8px;border-radius:30px;background:#edf1f5;color:#53606d;font-size:11px}.pill.ok{background:#e7f5ed;color:#167448}.pill.warn{background:#fff4df;color:#936114}
+.formrow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.formrow>*{flex:1;min-width:115px}
+.note{background:#fff8e8;border:1px solid #f1dfb8;color:#76561a;padding:11px 13px;border-radius:9px;font-size:13px;margin:12px 0}
+.muted{color:var(--muted)}.right{text-align:right}.hidden{display:none}.section{margin-top:18px}
+.kpi{font-size:12px;color:var(--muted)}.big{font-size:24px;font-weight:800}
+footer{color:var(--muted);font-size:11px;margin-top:25px}
+@media(max-width:850px){.wrap{grid-template-columns:1fr}nav{position:sticky;top:0;z-index:5;flex-direction:row;overflow:auto;border-right:0;border-bottom:1px solid var(--line);padding:8px}nav button{white-space:nowrap;padding:8px 10px}main{padding:15px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:430px){.grid{grid-template-columns:1fr 1fr}.metric strong{font-size:20px}}
+</style></head>
+<body>
+<header><div class="brand">RollLerd POS & Business <small>ระบบบริหารต้นทุน • สต็อก • เงินทุน | V3</small></div><div id="today"></div></header>
+<div class="wrap">
+<nav id="nav">
+<button class="active" data-page="dashboard">ภาพรวม</button><button data-page="ingredients">วัตถุดิบและราคา</button><button data-page="recipes">สูตรและต้นทุน</button><button data-page="purchases">แผนซื้อของ</button><button data-page="stock">สต็อก</button><button data-page="sales">ยอดขาย</button><button data-page="finance">เงินทุนและบัญชี</button><button data-page="audit">ตรวจสอบยอด</button>
+</nav>
+<main>
+<section id="dashboard" class="page">
+<h1>ภาพรวมร้าน</h1><div class="sub">ดูเงินสด มูลค่าสต็อก ต้นทุน และผลการขายจากข้อมูลชุดเดียวกัน</div>
+<div class="grid" id="dashMetrics"></div>
+<div class="card"><h2>สถานะการตรวจสอบ</h2><div id="dashAudit"></div></div>
+<div class="note">ข้อมูลตั้งต้นบางรายการเป็นราคาหรือปริมาณที่เคยให้ไว้ ส่วนที่ยังไม่มีข้อมูลแน่นอนจะระบุว่า “ต้องยืนยัน” และแก้ไขได้ก่อนนำไปใช้จริง</div>
+</section>
+<section id="ingredients" class="page hidden">
+<div class="row"><div><h1>วัตถุดิบและราคา</h1><div class="sub">แก้ราคาและหน่วยซื้อได้ ต้นทุนสูตรจะคำนวณใหม่อัตโนมัติ</div></div><button class="primary" onclick="addIngredient()">+ เพิ่มวัตถุดิบ</button></div>
+<div class="tablewrap card"><table><thead><tr><th>วัตถุดิบ</th><th>ขนาดซื้อ</th><th>ราคาซื้อ</th><th>หน่วยฐาน</th><th>ต้นทุน/หน่วยฐาน</th><th>แก้ไข</th></tr></thead><tbody id="ingredientRows"></tbody></table></div>
+</section>
+<section id="recipes" class="page hidden">
+<h1>สูตรและต้นทุนสินค้า</h1><div class="sub">สูตรตัวอย่างคำนวณจากปริมาณตั้งต้นที่ระบุไว้ แก้ไขปริมาณและ yield ได้</div>
+<div id="recipeCards"></div>
+<div class="note">ต้นทุนที่แสดงเป็นต้นทุนวัตถุดิบตามสูตรที่บันทึก ยังไม่รวมค่าแรง ค่าเช่า ค่าแก๊ส/ไฟ และของเสีย เว้นแต่เพิ่มเป็นค่าใช้จ่ายแยก</div>
+</section>
+<section id="purchases" class="page hidden">
+<div class="row"><div><h1>แผนซื้อของและรับสินค้า</h1><div class="sub">ติ๊กซื้อแล้วเพื่อบันทึกผู้ซื้อ วันที่ จำนวนและราคาจริง จากนั้นรับเข้าสต็อก</div></div><button class="primary" onclick="addPurchase()">+ เพิ่มรายการซื้อ</button></div>
+<div class="tablewrap card"><table><thead><tr><th>วัตถุดิบ</th><th>จำนวนซื้อ</th><th>ยอดจ่ายจริง</th><th>สถานะ</th><th>วันที่ซื้อ</th><th>ผู้ซื้อ</th><th>จัดการ</th></tr></thead><tbody id="purchaseRows"></tbody></table></div>
+</section>
+<section id="stock" class="page hidden">
+<h1>สต็อกและประวัติการใช้</h1><div class="sub">คงเหลือคิดจากยอดรับเข้า หักยอดเบิกใช้ และแสดงจำนวนรอบผลิตโดยประมาณ</div>
+<div class="tablewrap card"><table><thead><tr><th>วัตถุดิบ</th><th>รับเข้ารวม</th><th>ใช้ไป</th><th>คงเหลือ</th><th>มูลค่าคงเหลือ</th><th>ผลิตได้อีก</th><th>เบิกใช้</th></tr></thead><tbody id="stockRows"></tbody></table></div>
+<div class="section card"><h2>ประวัติสต็อก</h2><div id="stockHistory"></div></div>
+</section>
+<section id="sales" class="page hidden">
+<div class="row"><div><h1>ยอดขาย</h1><div class="sub">บันทึกยอดขายและตัดวัตถุดิบตามสูตรที่กำหนด</div></div><button class="primary" onclick="addSale()">+ บันทึกยอดขาย</button></div>
+<div class="tablewrap card"><table><thead><tr><th>วันที่</th><th>เมนู</th><th>จำนวนกล่อง</th><th>ราคาขาย/กล่อง</th><th>รายรับ</th><th>ต้นทุนขาย</th><th>กำไรขั้นต้น</th></tr></thead><tbody id="salesRows"></tbody></table></div>
+</section>
+<section id="finance" class="page hidden">
+<h1>เงินทุนและบัญชี</h1><div class="sub">แยกกระแสเงินสด มูลค่าสต็อก และผลกำไร ไม่บันทึกการซื้อซ้ำเป็นต้นทุนขาย</div>
+<div class="row card"><div><b>ทุนเริ่มต้น (บาท)</b><div class="muted">แก้ไขได้ตามเงินจริง</div></div><input id="capitalInput" type="number" min="0" onchange="setCapital(this.value)"></div>
+<div class="grid" id="financeMetrics"></div>
+<div class="row section"><h2>รายการเงินเข้าออก</h2><button onclick="addExpense()">+ เพิ่มรายจ่ายอื่น</button></div>
+<div class="tablewrap card"><table><thead><tr><th>วันที่</th><th>รายการ</th><th>ประเภท</th><th>เงินเข้า</th><th>เงินออก</th></tr></thead><tbody id="ledgerRows"></tbody></table></div>
+</section>
+<section id="audit" class="page hidden">
+<h1>ตรวจสอบเงินกับสต็อก</h1><div class="sub">ตรวจยอดเงินตามบัญชีเทียบเงินที่นับได้ และตรวจมูลค่าสต็อกตามระบบเทียบกับการตรวจนับจริง</div>
+<div class="grid" id="auditMetrics"></div>
+<div class="card"><h2>บันทึกยอดตรวจนับจริง</h2><div class="formrow"><label>เงินสด/เงินในบัญชีที่มีจริง (บาท)<br><input id="actualCash" type="number" placeholder="ยอดเงินจริง"></label><label>มูลค่าสต็อกที่ตรวจนับจริง (บาท)<br><input id="actualStock" type="number" placeholder="มูลค่าของจริง"></label><label>วันที่ตรวจ<br><input id="auditDate" type="date"></label></div><button class="primary" onclick="saveAudit()">บันทึกผลตรวจสอบ</button><div id="auditResult" class="section"></div></div>
+<div class="note">ส่วนต่างเป็นสัญญาณให้ตรวจสอบ เช่น รายการซื้อที่ยังไม่ได้รับของ การจ่ายเงินที่ยังไม่บันทึก ของเสีย หรือการเบิกใช้ที่ตกหล่น</div>
+</section>
+<footer>V3 Prototype • บันทึกข้อมูลในเบราว์เซอร์เครื่องนี้ (Local Storage) • ยังไม่ใช่ระบบออนไลน์หลายผู้ใช้</footer>
+</main></div>
+<script>
+const $=id=>document.getElementById(id), today=()=>new Date().toISOString().slice(0,10), money=n=>'฿'+(Number(n)||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}), uid=()=>Math.random().toString(36).slice(2,10);
+const initial={
+capital:60000,
+ingredients:[
+{id:'wrapper',name:'แผ่นปอเปี๊ยะ 8.5 นิ้ว',packQty:40,packUnit:'แผ่น',price:83,baseUnit:'แผ่น',usagePerBox:4,verified:true},
+{id:'chicken',name:'อกไก่',packQty:1000,packUnit:'g',price:96,baseUnit:'g',usagePerBox:33,verified:true},
+{id:'pork',name:'หมูบด',packQty:1000,packUnit:'g',price:132,baseUnit:'g',usagePerBox:40,verified:true},
+{id:'carrot',name:'แครอท',packQty:1,packUnit:'ลูก',price:10,baseUnit:'ลูก',usagePerBox:.025,verified:true},
+{id:'cabbage',name:'กะหล่ำปลี',packQty:1000,packUnit:'g',price:32,baseUnit:'g',usagePerBox:3.75,verified:false},
+{id:'glass',name:'วุ้นเส้นต้นสน 40g',packQty:1,packUnit:'ห่อ',price:8,baseUnit:'ห่อ',usagePerBox:.025,verified:true},
+{id:'butter',name:'เนย',packQty:2000,packUnit:'g',price:129,baseUnit:'g',usagePerBox:.75,verified:false},
+{id:'onion',name:'หอมใหญ่',packQty:1000,packUnit:'g',price:37,baseUnit:'g',usagePerBox:5.625,verified:false},
+{id:'season',name:'เครื่องปรุงไส้',packQty:1,packUnit:'สูตร',price:10,baseUnit:'สูตร',usagePerBox:.025,verified:false},
+{id:'oil',name:'น้ำมันพืช',packQty:5000,packUnit:'ml',price:270,baseUnit:'ml',usagePerBox:6.25,verified:false},
+{id:'chili',name:'พริก (น้ำจิ้ม)',packQty:1000,packUnit:'g',price:105,baseUnit:'g',usagePerBox:0,verified:true},
+{id:'sugar',name:'น้ำตาล (น้ำจิ้ม)',packQty:1000,packUnit:'g',price:23,baseUnit:'g',usagePerBox:0,verified:true},
+{id:'vinegar',name:'น้ำส้มสายชู',packQty:1000,packUnit:'ml',price:45,baseUnit:'ml',usagePerBox:0,verified:false},
+{id:'cheddar',name:'เชดด้าชีส',packQty:2000,packUnit:'g',price:785,baseUnit:'g',usagePerBox:10,verified:true},
+{id:'parmesan',name:'พาร์เมซาน',packQty:500,packUnit:'g',price:339,baseUnit:'g',usagePerBox:5,verified:true},
+{id:'curry',name:'พริกแกงข้าวซอย',packQty:500,packUnit:'g',price:169,baseUnit:'g',usagePerBox:0,verified:true},
+{id:'lime',name:'มะนาว',packQty:1,packUnit:'ลูก',price:5.5,baseUnit:'ลูก',usagePerBox:.5,verified:true},
+{id:'lettuce',name:'ผักสลัด',packQty:300,packUnit:'g',price:35,baseUnit:'g',usagePerBox:10,verified:true},
+{id:'pickle',name:'ผักดอง',packQty:1000,packUnit:'g',price:73,baseUnit:'g',usagePerBox:10,verified:true},
+{id:'shallot',name:'หอมแดง',packQty:500,packUnit:'g',price:29,baseUnit:'g',usagePerBox:5,verified:true},
+{id:'friedshallot',name:'หอมเจียว',packQty:500,packUnit:'g',price:95,baseUnit:'g',usagePerBox:3,verified:true},
+{id:'friednoodle',name:'เส้นทอด',packQty:500,packUnit:'g',price:55,baseUnit:'g',usagePerBox:10,verified:true},
+{id:'box',name:'กล่องบรรจุภัณฑ์',packQty:1,packUnit:'ใบ',price:1.5,baseUnit:'ใบ',usagePerBox:1,verified:true}
+],
+recipes:[
+{id:'plain',name:'ธรรมดา',sellPrice:55,yield:4,items:{wrapper:4,chicken:33,pork:40,carrot:.025,cabbage:3.75,glass:.025,butter:.75,onion:5.625,season:.025,oil:6.25,lettuce:10,box:1}},
+{id:'cheese',name:'ชีส',sellPrice:65,yield:4,items:{wrapper:4,chicken:33,pork:40,carrot:.025,cabbage:3.75,glass:.025,butter:.75,onion:5.625,season:.025,oil:6.25,cheddar:10,parmesan:5,lettuce:10,box:1}},
+{id:'khaosoi',name:'ข้าวซอย',sellPrice:65,yield:4,items:{wrapper:4,chicken:33,pork:40,carrot:.025,cabbage:3.75,glass:.025,butter:.75,onion:5.625,season:.025,oil:6.25,curry:0,lettuce:10,pickle:10,shallot:5,friedshallot:3,lime:.5,friednoodle:10,box:1}}
+],purchases:[],uses:[],sales:[],expenses:[],audits:[]
+};
+let db;try{db=JSON.parse(localStorage.getItem('rolld_v3')||'null')||structuredClone(initial)}catch(e){db=JSON.parse(JSON.stringify(initial))}
+function save(){localStorage.setItem('rolld_v3',JSON.stringify(db));render()}
+function unitCost(i){return i.packQty>0?i.price/i.packQty:0}
+function stockQty(id){let bought=db.purchases.filter(p=>p.ingredientId===id&&p.received).reduce((s,p)=>s+Number(p.qty||0),0);let used=db.uses.filter(u=>u.ingredientId===id).reduce((s,u)=>s+Number(u.qty||0),0);return bought-used}
+function stockValue(){return db.ingredients.reduce((s,i)=>s+Math.max(0,stockQty(i.id))*unitCost(i),0)}
+function cashBalance(){return Number(db.capital||0)+db.sales.reduce((s,x)=>s+x.revenue,0)-db.purchases.filter(p=>p.paid).reduce((s,p)=>s+Number(p.actualCost||0),0)-db.expenses.reduce((s,x)=>s+x.amount,0)}
+function costRecipe(r){return Object.entries(r.items).reduce((sum,[id,q])=>{let i=db.ingredients.find(x=>x.id===id);return sum+(i?unitCost(i)*q:0)},0)}
+function grossProfit(){return db.sales.reduce((s,x)=>s+x.revenue-x.cost,0)}
+function page(p){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(p).classList.remove('hidden');document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===p));}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>page(b.dataset.page));
+function render(){
+$('today').textContent=new Date().toLocaleDateString('th-TH',{dateStyle:'full'});
+let cash=cashBalance(),stock=stockValue(),sales=db.sales.reduce((s,x)=>s+x.revenue,0);
+$('dashMetrics').innerHTML=[['ทุนเริ่มต้น',money(db.capital)],['เงินสดตามบัญชี',money(cash)],['มูลค่าสต็อก',money(stock)],['รายรับสะสม',money(sales)]].map((x,i)=>`<div class="card metric"><label>${x[0]}</label><strong>${x[1]}</strong></div>`).join('');
+$('dashAudit').innerHTML=`<p>เงินสดตามบัญชี: <b>${money(cash)}</b> · มูลค่าสต็อกตามระบบ: <b>${money(stock)}</b></p><p>กำไรขั้นต้นจากยอดขาย: <b class="${grossProfit()>=0?'green':'red'}">${money(grossProfit())}</b></p><span class="pill ${db.purchases.some(p=>!p.received)?'warn':'ok'}">${db.purchases.filter(p=>!p.received).length} รายการซื้อที่ยังรับของไม่ครบ/ยังไม่รับ</span>`;
+$('ingredientRows').innerHTML=db.ingredients.map(i=>`<tr><td>${i.name} ${i.verified?'<span class="pill ok">มีราคาที่แจ้ง</span>':'<span class="pill warn">สมมติฐาน/รอยืนยัน</span>'}</td><td>${i.packQty} ${i.packUnit}</td><td>${money(i.price)}</td><td>${i.baseUnit}</td><td>${money(unitCost(i))}</td><td><button onclick="editIngredient('${i.id}')">แก้ไข</button></td></tr>`).join('');
+$('recipeCards').innerHTML=db.recipes.map(r=>{let c=costRecipe(r),per=c/r.yield;return `<div class="card section"><div class="row"><h2>${r.name}</h2><button onclick="editRecipe('${r.id}')">แก้สูตร</button></div><div class="grid"><div><span class="kpi">ต้นทุนต่อชุดสูตร</span><div class="big">${money(c)}</div></div><div><span class="kpi">Yield (ชิ้น)</span><div class="big">${r.yield}</div></div><div><span class="kpi">ต้นทุนต่อชิ้น</span><div class="big">${money(per)}</div></div><div><span class="kpi">ต้นทุนต่อกล่อง 4 ชิ้น</span><div class="big">${money(per*4)}</div></div></div><p>ราคาขาย/กล่อง <b>${money(r.sellPrice)}</b> · กำไรขั้นต้น/กล่อง <b class="${r.sellPrice-per*4>=0?'green':'red'}">${money(r.sellPrice-per*4)}</b></p><div class="muted">รายการสูตร: ${Object.entries(r.items).map(([id,q])=>{let i=db.ingredients.find(x=>x.id===id);return i?`${i.name} ${q} ${i.baseUnit}`:''}).filter(Boolean).join(' · ')}</div></div>`}).join('');
+$('purchaseRows').innerHTML=db.purchases.map(p=>{let i=db.ingredients.find(x=>x.id===p.ingredientId);return `<tr><td>${i?.name||'ไม่พบวัตถุดิบ'}</td><td>${p.qty} ${i?.baseUnit||''}</td><td>${money(p.actualCost)}</td><td>${p.received?'<span class="pill ok">รับเข้าสต็อกแล้ว</span>':'<span class="pill warn">รอรับของ</span>'}</td><td>${p.date||'-'}</td><td>${p.buyer||'-'}</td><td>${p.received?'':`<button onclick="receivePurchase('${p.id}')">ติ๊กซื้อ/รับของแล้ว</button>`} <button class="btn-danger" onclick="removePurchase('${p.id}')">ลบ</button></td></tr>`}).join('');
+$('stockRows').innerHTML=db.ingredients.map(i=>{let bought=db.purchases.filter(p=>p.ingredientId===i.id&&p.received).reduce((s,p)=>s+Number(p.qty),0),used=db.uses.filter(u=>u.ingredientId===i.id).reduce((s,u)=>s+Number(u.qty),0),left=stockQty(i.id),runs=i.usagePerBox>0?Math.floor(left/i.usagePerBox):null;return `<tr><td>${i.name}</td><td>${bought} ${i.baseUnit}</td><td>${used} ${i.baseUnit}</td><td><b>${left.toFixed(2)} ${i.baseUnit}</b></td><td>${money(Math.max(0,left)*unitCost(i))}</td><td>${runs===null?'需設定用量':runs+' 箱'}</td><td><button onclick="useStock('${i.id}')">เบิกใช้</button></td></tr>`}).join('');
+$('stockHistory').innerHTML=[...db.uses.map(u=>({date:u.date,text:`เบิกใช้ ${db.ingredients.find(i=>i.id===u.ingredientId)?.name||''} ${u.qty} ${db.ingredients.find(i=>i.id===u.ingredientId)?.baseUnit||''} · ${u.note}`})),...db.purchases.filter(p=>p.received).map(p=>({date:p.date,text:`รับเข้า ${db.ingredients.find(i=>i.id===p.ingredientId)?.name||''} ${p.qty}`}))].sort((a,b)=>b.date.localeCompare(a.date)).map(x=>`<p><b>${x.date}</b> — ${x.text}</p>`).join('')||'<p class="muted">ยังไม่มีรายการ</p>';
+$('salesRows').innerHTML=db.sales.map(s=>`<tr><td>${s.date}</td><td>${s.recipeName}</td><td>${s.boxes}</td><td>${money(s.price)}</td><td>${money(s.revenue)}</td><td>${money(s.cost)}</td><td class="${s.revenue-s.cost>=0?'green':'red'}">${money(s.revenue-s.cost)}</td></tr>`).join('');
+$('capitalInput').value=db.capital;
+$('financeMetrics').innerHTML=[['เงินสดตามบัญชี',money(cash)],['มูลค่าสต็อก',money(stock)],['รายรับสะสม',money(sales)],['กำไรขั้นต้น',money(grossProfit())]].map(x=>`<div class="card metric"><label>${x[0]}</label><strong>${x[1]}</strong></div>`).join('');
+let ledger=[...db.purchases.filter(p=>p.paid).map(p=>({date:p.date,label:'ซื้อ '+(db.ingredients.find(i=>i.id===p.ingredientId)?.name||''),type:'ซื้อวัตถุดิบ',in:0,out:p.actualCost})),...db.sales.map(s=>({date:s.date,label:'ขาย '+s.recipeName,type:'ขายสินค้า',in:s.revenue,out:0})),...db.expenses.map(e=>({date:e.date,label:e.name,type:'ค่าใช้จ่าย',in:0,out:e.amount}))].sort((a,b)=>a.date.localeCompare(b.date));
+$('ledgerRows').innerHTML=ledger.map(x=>`<tr><td>${x.date}</td><td>${x.label}</td><td>${x.type}</td><td class="green">${x.in?money(x.in):'-'}</td><td class="red">${x.out?money(x.out):'-'}</td></tr>`).join('');
+$('auditMetrics').innerHTML=[['เงินสดตามระบบ',money(cash)],['มูลค่าสต็อกตามระบบ',money(stock)],['กำไรขั้นต้นสะสม',money(grossProfit())],['ทุน + กำไรขั้นต้น + สต็อก',money(cash+stock)]].map(x=>`<div class="card metric"><label>${x[0]}</label><strong>${x[1]}</strong></div>`).join('');
+let last=db.audits.at(-1);$('auditResult').innerHTML=last?`<p>ตรวจล่าสุด ${last.date}: เงินสดจริง ${money(last.cash)} (ต่าง ${money(last.cash-cashBalance())}) · สต็อกจริง ${money(last.stock)} (ต่าง ${money(last.stock-stockValue())})</p>`:'<p class="muted">ยังไม่มีผลตรวจนับ</p>';
+}
+function addIngredient(){let name=prompt('ชื่อวัตถุดิบ');if(!name)return;let packQty=Number(prompt('จำนวนในแพ็ก เช่น 1000')||0),packUnit=prompt('หน่วยซื้อ เช่น g, ml, ใบ')||'หน่วย',price=Number(prompt('ราคาซื้อทั้งแพ็ก')||0),baseUnit=prompt('หน่วยฐาน เช่น g, ml, ใบ')||packUnit;if(!packQty||price<0)return;db.ingredients.push({id:uid(),name,packQty,packUnit,price,baseUnit,usagePerBox:0,verified:false});save()}
+function editIngredient(id){let i=db.ingredients.find(x=>x.id===id);let price=prompt('ราคาซื้อแพ็กใหม่ (บาท)',i.price);if(price===null)return;let qty=prompt('จำนวนต่อแพ็ก',i.packQty);if(qty===null)return;i.price=Number(price);i.packQty=Number(qty);i.verified=true;save()}
+function editRecipe(id){let r=db.recipes.find(x=>x.id===id);let y=prompt('Yield: ได้กี่ชิ้นจากสูตรนี้?',r.yield);if(y===null)return;let sp=prompt('ราคาขายต่อกล่อง',r.sellPrice);if(sp===null)return;r.yield=Math.max(1,Number(y));r.sellPrice=Number(sp);for(let [iid,q] of Object.entries(r.items)){let ing=db.ingredients.find(i=>i.id===iid);if(!ing)continue;let v=prompt(`ปริมาณ ${ing.name} (${ing.baseUnit})`,q);if(v!==null)r.items[iid]=Number(v)}save()}
+function addPurchase(){let choices=db.ingredients.map((i,n)=>`${n+1}. ${i.name}`).join('\\n');let n=Number(prompt('เลือกวัตถุดิบ:\\n'+choices));let i=db.ingredients[n-1];if(!i)return;let qty=Number(prompt(`จำนวนรับซื้อ (${i.baseUnit})`));if(!(qty>0))return;let cost=Number(prompt('ยอดจ่ายจริง (บาท)'));if(!(cost>=0))return;db.purchases.push({id:uid(),ingredientId:i.id,qty,actualCost:cost,date:today(),buyer:'',paid:false,received:false});save()}
+function receivePurchase(id){let p=db.purchases.find(x=>x.id===id);let buyer=prompt('ใครเป็นผู้ซื้อ/ผู้รับของ?');if(buyer===null)return;let date=prompt('วันที่ซื้อ/รับของ YYYY-MM-DD',today());if(date===null)return;let paid=confirm('จ่ายเงินแล้วหรือยัง? กด OK = จ่ายแล้ว');p.buyer=buyer;p.date=date;p.paid=paid;p.received=true;save()}
+function removePurchase(id){if(!confirm('ลบรายการซื้อ?'))return;db.purchases=db.purchases.filter(p=>p.id!==id);save()}
+function useStock(id){let i=db.ingredients.find(x=>x.id===id);let q=Number(prompt(`เบิกใช้ ${i.name} จำนวน (${i.baseUnit})`));if(!(q>0))return;if(q>stockQty(id)){alert('สต็อกไม่พอ');return}let note=prompt('นำไปใช้ทำอะไร/เมนูอะไร?')||'';db.uses.push({id:uid(),ingredientId:id,qty:q,date:today(),note});save()}
+function addSale(){let opts=db.recipes.map((r,n)=>`${n+1}. ${r.name}`).join('\\n');let n=Number(prompt('เลือกเมนู:\\n'+opts));let r=db.recipes[n-1];if(!r)return;let boxes=Number(prompt('จำนวนกล่อง'));if(!(boxes>0))return;let c=costRecipe(r)/r.yield*4*boxes;for(let [id,q] of Object.entries(r.items)){let ing=db.ingredients.find(i=>i.id===id);if(!ing)continue;let needed=q/r.yield*4*boxes;if(needed>stockQty(id)){alert(`สต็อก ${ing.name} ไม่พอ (ต้องใช้ ${needed.toFixed(2)} ${ing.baseUnit})`);return}}
+let price=Number(prompt('ราคาขายต่อกล่อง',r.sellPrice));if(!(price>=0))return;
+for(let [id,q] of Object.entries(r.items))db.uses.push({id:uid(),ingredientId:id,qty:q/r.yield*4*boxes,date:today(),note:`ขาย ${r.name} ${boxes} กล่อง`});
+db.sales.push({id:uid(),date:today(),recipeId:r.id,recipeName:r.name,boxes,price,revenue:price*boxes,cost:c});save()}
+function addExpense(){let name=prompt('ชื่อค่าใช้จ่าย');if(!name)return;let amount=Number(prompt('จำนวนเงิน'));if(!(amount>0))return;db.expenses.push({name,amount,date:today()});save()}
+function setCapital(v){db.capital=Number(v)||0;save()}
+function saveAudit(){let cash=Number($('actualCash').value),stock=Number($('actualStock').value),date=$('auditDate').value||today();if(!Number.isFinite(cash)||!Number.isFinite(stock)){alert('กรอกยอดเงินจริงและมูลค่าสต็อกจริง');return}db.audits.push({date,cash,stock});save()}
+render();
+</script></body></html>

@@ -1,0 +1,4 @@
+// settings page renderer for RollLerd POS
+window.renderSettingsPage = function () {
+  return `<div class="card"><h2>ตั้งค่าร้าน</h2><p>ชื่อระบบ: RollLerd POS & Business</p><p>แบรนด์: โรลเลิศ โรลดี</p><p>ภาษา: ไทย / อังกฤษ · สกุลเงิน: THB</p><div class="warn">${cloudReady?"เชื่อมต่อ Supabase แล้ว: ข้อมูลหลักซิงก์ผ่านบัญชีเจ้าของร้าน และมีสำเนาในเบราว์เซอร์เครื่องนี้":"ยังไม่ได้เชื่อมต่อ Supabase: ข้อมูลที่แก้ไขจะอยู่ในเบราว์เซอร์เครื่องนี้ก่อน"} การสลับ role เป็นเพียงตัวอย่าง ไม่ใช่ระบบรักษาความปลอดภัยจริง</div><button onclick="let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db,null,2)],{type:'application/json'}));a.download='rolllerd-data.json';a.click()">ส่งออกข้อมูล JSON</button> <button onclick="if(confirm('คืนค่าเริ่มต้น?')){localStorage.removeItem('rolllerd_full');location.reload()}">คืนค่าเริ่มต้น</button></div>`;
+};
